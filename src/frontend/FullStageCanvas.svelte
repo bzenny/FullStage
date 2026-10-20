@@ -31,6 +31,7 @@
         model = { ...model, layers: [...model.layers, { id, type, label: type === "text" ? "Text" : "Rectangle", text: type === "text" ? "New title" : "", x: 24, y: 24, w: 38, h: 22, color: type === "text" ? "#F5F7FA" : "#438DFF", hidden: false }] }
         focused = id
     }
+    function dimension(key: string): "x" | "y" | "w" | "h" { return key as "x" | "y" | "w" | "h" }
     function patch(key: keyof Layer, value: any) {
         model = { ...model, layers: model.layers.map((l) => l.id === focused ? { ...l, [key]: value } : l) }
     }
@@ -90,7 +91,7 @@
     </div>{/each}</aside>
     {#if active}<section><h3>Properties</h3><label>Label <input value={active.label} on:input={(e) => patch("label", e.currentTarget.value)}/></label>
         {#if active.type==="text"}<label>Text <input value={active.text} on:input={(e) => patch("text", e.currentTarget.value)}/></label>{/if}
-        {#each ["x","y","w","h"] as key}<label>{key.toUpperCase()} % <input type="number" min="0" max="100" value={active[key as "x"|"y"|"w"|"h"]} on:input={(e) => patch(key as keyof Layer, Number(e.currentTarget.value))}/></label>{/each}
+        {#each ["x","y","w","h"] as key}<label>{key.toUpperCase()} % <input type="number" min="0" max="100" value={active[dimension(key)]} on:input={(e) => patch(dimension(key), Number(e.currentTarget.value))}/></label>{/each}
         <label>Color <input type="color" value={active.color} on:input={(e) => patch("color", e.currentTarget.value)}/></label>
         <label><input type="checkbox" checked={active.hidden} on:change={(e) => patch("hidden", e.currentTarget.checked)}/> Hidden</label>
         <button on:click={() => {model = {...model,layers:model.layers.filter(l=>l.id!==focused)};focused=""}}>Remove layer</button>
