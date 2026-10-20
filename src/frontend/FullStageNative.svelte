@@ -2,6 +2,7 @@
     // FullStage opt-in operator panel for FreeShow v1.6.6.
     // Integrate through MainLayout.svelte only after the upstream build baseline passes.
     import { get } from "svelte/store"
+    import FullStageStudio from "./FullStageStudio.svelte"
     import { activePage, activeShow, outLocked, outputs, scenes, media, activeStage } from "./stores"
     import { getLayoutRef } from "./components/helpers/show"
     import { updateOut } from "./components/helpers/showActions"
@@ -11,7 +12,7 @@
 
     let chosenIndex = 0
     let search = ""
-    let tab: "slides" | "scenes" | "media" | "outputs" = "slides"
+    let tab: "slides" | "scenes" | "media" | "outputs" | "studio" = "slides"
     let notice = ""
 
     $: ref = $activeShow?.id ? getLayoutRef() : []
@@ -37,11 +38,13 @@
 <section class="fullstage" aria-label="FullStage operator workspace">
     <header><strong>Full<span>Stage</span></strong><small> OPEN PRESENTER SOFTWARE · NATIVE CONTROL ALPHA</small></header>
     <nav aria-label="Workspace sections">
-        {#each ["slides", "scenes", "media", "outputs"] as key}
+        {#each ["slides", "scenes", "media", "outputs", "studio"] as key}
             <button class:active={tab === key} on:click={() => tab = key as typeof tab}>{key}</button>
         {/each}
     </nav>
-    {#if tab === "slides"}
+    {#if tab === "studio"}
+        <FullStageStudio />
+    {:else if tab === "slides"}
         <h2>Service cue selection</h2>
         {#if !$activeShow?.id}<p>Select a show using the existing FreeShow project browser.</p>{/if}
         <div class="cards">
