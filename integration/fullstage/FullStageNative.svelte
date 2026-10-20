@@ -2,12 +2,12 @@
     // FullStage opt-in operator panel for FreeShow v1.6.6.
     // Integrate through MainLayout.svelte only after the upstream build baseline passes.
     import { get } from "svelte/store"
-    import { activePage, activeShow, outLocked, outputs, scenes, media, activeStage } from "../stores"
-    import { getLayoutRef } from "../components/helpers/show"
-    import { updateOut } from "../components/helpers/showActions"
-    import { setOutput, startScene, toggleOutput } from "../components/helpers/output"
-    import { clearSlide, clearAll, restoreOutput } from "../components/output/clear"
-    import { _show } from "../components/helpers/shows"
+    import { activePage, activeShow, outLocked, outputs, scenes, media, activeStage } from "./stores"
+    import { getLayoutRef } from "./components/helpers/show"
+    import { updateOut } from "./components/helpers/showActions"
+    import { setOutput, startScene, toggleOutput } from "./components/helpers/output"
+    import { clearSlide, clearAll, restoreOutput } from "./components/output/clear"
+    import { _show } from "./components/helpers/shows"
 
     let chosenIndex = 0
     let search = ""
