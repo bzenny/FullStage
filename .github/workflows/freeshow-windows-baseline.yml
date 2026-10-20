@@ -1,0 +1,74 @@
+name: FreeShow 1.6.6 Windows Baseline
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/freeshow-windows-baseline.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-baseline:
+    runs-on: windows-latest
+    timeout-minutes: 70
+    steps:
+      - name: Checkout FullStage metadata
+        uses: actions/checkout@v4
+        with:
+          path: fullstage
+      - name: Checkout tagged FreeShow source
+        uses: actions/checkout@v4
+        with:
+          repository: ChurchApps/FreeShow
+          ref: v1.6.6
+          path: upstream
+          fetch-depth: 0
+      - name: Record upstream commit, license and version
+        shell: pwsh
+        working-directory: upstream
+        run: |
+          git rev-parse HEAD | Tee-Object -FilePath upstream-commit.txt
+          node -p "require('./package.json').version"
+          if (!(Test-Path LICENSE)) { throw 'Upstream license missing' }
+          Write-Output 'Upstream FreeShow source remains separate; preserve Git history for eventual derivative.'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: upstream/package-lock.json
+      - name: Install dependencies
+        working-directory: upstream
+        run: npm ci
+      - name: Unit tests
+        working-directory: upstream
+        run: npm run test:unit
+      - name: Svelte validation
+        working-directory: upstream
+        run: npm run test:svelte
+      - name: Production build
+        working-directory: upstream
+        run: npm run build
+      - name: Package unpacked Electron app
+        working-directory: upstream
+        run: npm run pack
+      - name: Archive upstream source identification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: freeshow-1-6-6-provenance
+          path: |
+            upstream/upstream-commit.txt
+            upstream/LICENSE
+            upstream/package.json
+          retention-days: 30
+      - name: Upload Windows unpacked build
+        uses: actions/upload-artifact@v4
+        with:
+          name: freeshow-1-6-6-windows-baseline
+          path: |
+            upstream/dist/**/win-unpacked/**
+            upstream/dist/**/win-ia32-unpacked/**
+            upstream/release/**/win-unpacked/**
+            upstream/build/**/win-unpacked/**
+          if-no-files-found: error
+          retention-days: 14
