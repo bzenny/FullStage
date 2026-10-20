@@ -30,11 +30,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
+          - os: windows-2022
             label: windows
           - os: macos-latest
             label: macos
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             label: linux
     runs-on: ${{ matrix.os }}
     timeout-minutes: 50
@@ -51,10 +51,23 @@ jobs:
         run: npm ci
       - name: Unit tests
         run: npm run test:unit --if-present
-      - name: Svelte check
+      - name: Svelte check (diagnostic; does not block independent build)
+        id: svelte
+        continue-on-error: true
         run: npm run test:svelte --if-present
-      - name: Compile application
+      - name: Compile application (independent diagnostics)
+        id: compile
+        continue-on-error: true
         run: npm run build
+      - name: Verify compilation and Svelte validation
+        shell: bash
+        env:
+          SVELTE: ${{ steps.svelte.outcome }}
+          COMPILE: ${{ steps.compile.outcome }}
+        run: |
+          echo "Svelte: $SVELTE; Build: $COMPILE"
+          test "$SVELTE" = success
+          test "$COMPILE" = success
       - name: Package unpacked application
         run: npm run pack
       - name: Upload unpacked application
