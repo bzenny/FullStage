@@ -1,5 +1,7 @@
 <script lang="ts">
     import { get } from "svelte/store"
+    import FullStageCanvas from "./FullStageCanvas.svelte"
+    import FullStageMediaLibrary from "./FullStageMediaLibrary.svelte"
     import { activePage, media, outLocked, outputs, scenes, styles } from "./stores"
     import { startScene, setOutput } from "./components/helpers/output"
 
@@ -77,11 +79,13 @@
                     <fieldset><legend>Output bindings</legend>{#each outputList as [id, output]}<label class="check"><input type="checkbox" checked={draftBindings.includes(id)} on:change={() => toggleBinding(id)}/>{output.name || id}</label>{/each}</fieldset>
                     <label>Overlay IDs (comma separated)<input bind:value={draftOverlays}/></label>
                     <div class="actions"><button disabled={$outLocked} on:click={saveScene}>Save native scene</button><button disabled={$outLocked} on:click={playScene}>Take scene live</button></div>
+                    <FullStageCanvas sceneId={selectedSceneId} />
                     <p>Scene edits map to FreeShow's existing style, overlay and output-binding model. Freeform draggable layers require a separate versioned renderer adapter.</p>
                 {:else}<p>Select or create a scene.</p>{/if}
             </div>
         </div>
     {:else}
+        <FullStageMediaLibrary />
         <label>Search imported media<input aria-label="Search media" bind:value={filter} placeholder="Name or path" /></label>
         <div class="media-grid">
             {#each mediaList as [id, asset]}
