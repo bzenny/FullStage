@@ -1,0 +1,68 @@
+name: Desktop CI
+on:
+  push:
+    branches: [main, 'feature/**', 'integration/**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-gate:
+    name: Check desktop source
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        shell: bash
+        run: |
+          if [[ -f package.json && -f package-lock.json && -f src/frontend/App.svelte && -f src/electron/index.ts ]]; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo 'Desktop source not yet imported; package builds intentionally gated.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+  desktop:
+    needs: source-gate
+    if: needs.source-gate.outputs.ready == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: windows
+          - os: macos-latest
+            label: macos
+          - os: ubuntu-latest
+            label: linux
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Linux native prerequisites
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libudev-dev libx11-dev libxkbfile-dev
+      - name: Install
+        run: npm ci
+      - name: Unit tests
+        run: npm run test:unit --if-present
+      - name: Svelte check
+        run: npm run test:svelte --if-present
+      - name: Compile application
+        run: npm run build
+      - name: Package unpacked application
+        run: npm run pack
+      - name: Upload unpacked application
+        uses: actions/upload-artifact@v4
+        with:
+          name: fullstage-${{ matrix.label }}-unpacked-${{ github.run_number }}
+          path: |
+            dist/**
+            release/**
+          if-no-files-found: error
+          retention-days: 14
