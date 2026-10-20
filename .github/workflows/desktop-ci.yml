@@ -38,6 +38,8 @@ jobs:
             label: linux
     runs-on: ${{ matrix.os }}
     timeout-minutes: 50
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -46,7 +48,7 @@ jobs:
           cache: npm
       - name: Linux native prerequisites
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libudev-dev libx11-dev libxkbfile-dev
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libudev-dev libx11-dev libxkbfile-dev libegl1 libgles2 libegl-dev libgles-dev
       - name: Install
         run: npm ci
       - name: Unit tests
