@@ -21,6 +21,7 @@
     $: mediaItems = Object.entries($media).filter(([id, asset]) => (asset?.name || asset?.path || id).toLowerCase().includes(search.toLowerCase()))
     $: locked = $outLocked
 
+    function chooseTab(key: string) { tab = key as typeof tab }
     function guard(action: () => void) {
         if (get(outLocked)) { notice = "Outputs locked"; return }
         try { action(); notice = "" } catch (error) { notice = String(error) }
@@ -39,7 +40,7 @@
     <header><strong>Full<span>Stage</span></strong><small> OPEN PRESENTER SOFTWARE · NATIVE CONTROL ALPHA</small></header>
     <nav aria-label="Workspace sections">
         {#each ["slides", "scenes", "media", "outputs", "studio"] as key}
-            <button class:active={tab === key} on:click={() => tab = key as typeof tab}>{key}</button>
+            <button class:active={tab === key} on:click={() => chooseTab(key)}>{key}</button>
         {/each}
     </nav>
     {#if tab === "studio"}
