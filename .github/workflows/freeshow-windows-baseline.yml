@@ -9,7 +9,8 @@ permissions:
   contents: read
 jobs:
   windows-baseline:
-    runs-on: windows-latest
+    runs-on: windows-2022
+    # Pin VS2022 until node-gyp recognizes the Windows latest image's newer Visual Studio.
     timeout-minutes: 70
     steps:
       - name: Checkout FullStage metadata
