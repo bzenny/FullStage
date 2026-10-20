@@ -1,0 +1,38 @@
+name: Import FreeShow upstream history (review branch)
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  import-upstream:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Import upstream tag with original commit history
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'FullStage Integration Bot'
+          git config user.email '122856656+bzenny@users.noreply.github.com'
+          git remote add freeshow https://github.com/ChurchApps/FreeShow.git
+          git fetch freeshow tag v1.6.6
+          git switch -c integration/freeshow-v1.6.6
+          git merge --allow-unrelated-histories -X ours --no-edit v1.6.6
+          test -s src/frontend/App.svelte
+          test -s src/electron/index.ts
+          test -s LICENSE
+          node -e "const p=require('./package.json');if(p.version!=='1.6.6')process.exit(1)"
+          git log --oneline --max-count=3
+          git push origin HEAD:refs/heads/integration/freeshow-v1.6.6
+      - name: Open integration pull request
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          gh pr create --base main --head integration/freeshow-v1.6.6             --title 'integration: import FreeShow 1.6.6 source with Git history'             --body 'This branch merges upstream FreeShow tag v1.6.6 with original ancestry preserved. Review root-file merge decisions, dependency licenses and baseline builds before merging. Existing FullStage governance files win root conflicts. This does not yet include the native FullStage studio.'
