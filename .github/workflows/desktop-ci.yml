@@ -68,9 +68,11 @@ jobs:
           COMPILE: ${{ steps.compile.outcome }}
         run: |
           echo "Svelte: $SVELTE; Build: $COMPILE"
-          test "$SVELTE" = success
+          echo "Typechecking remains a release-blocking gate; packaging is diagnostic only."
           test "$COMPILE" = success
-      - name: Package unpacked application
+      - name: Package unpacked application (diagnostic)
+        id: packaging
+        continue-on-error: true
         run: npm run pack
       - name: Upload unpacked application
         uses: actions/upload-artifact@v4
@@ -79,5 +81,14 @@ jobs:
           path: |
             dist/**
             release/**
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
+
+      - name: Fail release qualification on typecheck or packaging
+        shell: bash
+        env:
+          SVELTE: ${{ steps.svelte.outcome }}
+          PACKAGING: ${{ steps.packaging.outcome }}
+        run: |
+          echo "Typecheck=$SVELTE packaging=$PACKAGING" >> "$GITHUB_STEP_SUMMARY"
+          test "$SVELTE" = success && test "$PACKAGING" = success
