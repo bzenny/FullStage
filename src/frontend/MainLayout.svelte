@@ -11,6 +11,7 @@
     import SettingsTabs from "./components/settings/SettingsTabs.svelte"
     import Projects from "./components/show/Projects.svelte"
     import Show from "./components/show/Show.svelte"
+    import FullStageNative from "./FullStageNative.svelte"
     import ShowTools from "./components/show/ShowTools.svelte"
     import StageLayouts from "./components/stage/StageLayouts.svelte"
     import Resizeable from "./components/system/Resizeable.svelte"
@@ -60,7 +61,11 @@
                 {#if $focusMode}
                     <LazyLoad component={() => import("./components/show/focus/FocusMode.svelte")} show={$focusMode} />
                 {:else}
-                    <Show />
+                    {#if import.meta.env.VITE_FULLSTAGE_UI === "true"}
+                        <FullStageNative />
+                    {:else}
+                        <Show />
+                    {/if}
                 {/if}
             {:else if page === "edit"}
                 <LazyLoad component={() => import("./components/edit/Editor.svelte")} show={page === "edit"} />
