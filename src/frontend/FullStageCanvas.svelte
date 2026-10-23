@@ -1,7 +1,5 @@
 <script lang="ts">
-    import { onMount } from "svelte"
     import { scenes, outLocked } from "./stores"
-    import { startScene } from "./components/helpers/output"
 
     type Layer = { id: string; type: "text" | "block"; label: string; text: string; x: number; y: number; w: number; h: number; color: string; hidden: boolean }
     type Composition = { version: 1; durationMs: number; transition: "cut" | "fade" | "slide"; layers: Layer[] }
