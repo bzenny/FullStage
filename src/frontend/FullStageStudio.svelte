@@ -14,7 +14,7 @@
     let draftOverlays = ""
     let notice = ""
     $: sceneList = Object.entries($scenes)
-    $: mediaList = Object.entries($media).filter(([id, asset]) => (asset?.name || asset?.path || id).toLowerCase().includes(filter.toLowerCase()))
+    $: mediaList = Object.entries($media).filter(([id, asset]) => (asset?.name || asset?.name || id).toLowerCase().includes(filter.toLowerCase()))
     $: outputList = Object.entries($outputs).filter(([, output]) => output.enabled)
     $: if (selectedSceneId && !$scenes[selectedSceneId]) selectedSceneId = ""
 
@@ -57,7 +57,7 @@
         startScene(selectedSceneId)
     }
     function showMedia(id: string, asset: any) {
-        if ($outLocked || !asset?.path) return
+        if ($outLocked || !asset?.name) return
         setOutput("background", { id, path: asset.path, type: asset.type })
     }
 </script>
@@ -89,7 +89,7 @@
         <label>Search imported media<input aria-label="Search media" bind:value={filter} placeholder="Name or path" /></label>
         <div class="media-grid">
             {#each mediaList as [id, asset]}
-                <article><strong>{asset.name || id}</strong><small>{asset.type || "media"}</small><code>{asset.path || "No local path"}</code><button disabled={$outLocked || !asset.path} on:click={() => showMedia(id, asset)}>Send to background</button></article>
+                <article><strong>{asset.name || id}</strong><small>{"Library entry"}</small><code>{"Use FreeShow drawer for playback"}</code><button disabled={$outLocked || true} on:click={() => notice = "Playback remains in the native FreeShow media drawer."}>Send to background</button></article>
             {/each}
         </div>
         <p>Importing, file management and playlist persistence currently use FreeShow's existing drawer and media subsystems.</p>
