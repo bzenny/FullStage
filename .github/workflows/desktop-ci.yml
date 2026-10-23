@@ -2,7 +2,6 @@ name: Desktop CI
 on:
   push:
     branches: [main, 'feature/**', 'integration/**']
-  pull_request:
   workflow_dispatch:
 permissions:
   contents: read
@@ -81,7 +80,7 @@ jobs:
           path: |
             dist/**
             release/**
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 14
 
       - name: Fail release qualification on typecheck or packaging
