@@ -9,12 +9,11 @@
     let folder = "All"
     let playlist = "Service Media"
     let notice = ""
-    let preview = ""
     onMount(() => {
         try { const old = JSON.parse(localStorage.getItem("fullstage-media-v1") || "null"); if (old?.version===1 && Array.isArray(old.entries)) catalog = old } catch { notice="Stored media index could not be read." }
     })
-    $: incoming = Object.entries($media).map(([id, asset]) => ({
-        id, name: asset.name || id, path: asset.path || "", type: asset.type || "", folder: "FreeShow Library"
+    $: incoming = Object.entries($media).map(([id, asset]): Entry => ({
+        id, name: asset.name || id, path: "", type: "", folder: "FreeShow Library"
     }))
     $: combined = [...incoming, ...catalog.entries.filter((a) => !incoming.some((b) => b.id === a.id))]
     $: folders = ["All", ...new Set(combined.map((a) => a.folder))]
