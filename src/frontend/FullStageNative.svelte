@@ -3,7 +3,7 @@
     // Integrate through MainLayout.svelte only after the upstream build baseline passes.
     import { get } from "svelte/store"
     import FullStageStudio from "./FullStageStudio.svelte"
-    import { activePage, activeShow, outLocked, outputs, scenes, media, activeStage } from "./stores"
+    import { activeShow, outLocked, outputs, scenes, media } from "./stores"
     import { getLayoutRef } from "./components/helpers/show"
     import { updateOut } from "./components/helpers/showActions"
     import { setOutput, startScene, toggleOutput } from "./components/helpers/output"
@@ -18,7 +18,7 @@
     $: ref = $activeShow?.id ? getLayoutRef() : []
     $: enabledOutputs = Object.entries($outputs).filter(([, output]) => output.enabled)
     $: sceneItems = Object.entries($scenes)
-    $: mediaItems = Object.entries($media).filter(([id, asset]) => (asset?.name || asset?.path || id).toLowerCase().includes(search.toLowerCase()))
+    $: mediaItems = Object.entries($media).filter(([id, asset]) => (asset?.name || asset?.name || id).toLowerCase().includes(search.toLowerCase()))
     $: locked = $outLocked
 
     function chooseTab(key: string) { tab = key as typeof tab }
@@ -65,7 +65,7 @@
         <input aria-label="Search media" placeholder="Search imported media" bind:value={search} />
         <div class="cards">
             {#each mediaItems as [id, asset]}
-                <button disabled={locked} title={asset?.path || ""} on:click={() => guard(() => setOutput("background", { id, path: asset.path, type: asset.type }))}>{asset?.name || asset?.path || id}</button>
+                <button disabled={locked} title={asset?.name || ""} on:click={() => guard(() => setOutput("background", { id, path: asset.path, type: "media" }))}>{asset?.name || asset?.name || id}</button>
             {/each}
         </div>
     {:else}
