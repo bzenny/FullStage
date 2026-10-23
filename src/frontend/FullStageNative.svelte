@@ -2,7 +2,8 @@
     // FullStage opt-in operator panel for FreeShow v1.6.6.
     // Integrate through MainLayout.svelte only after the upstream build baseline passes.
     import { get } from "svelte/store"
-    import { activePage, activeShow, outLocked, outputs, scenes, media, activeStage } from "./stores"
+    import FullStageStudio from "./FullStageStudio.svelte"
+    import { activeShow, outLocked, outputs, scenes, media } from "./stores"
     import { getLayoutRef } from "./components/helpers/show"
     import { updateOut } from "./components/helpers/showActions"
     import { setOutput, startScene, toggleOutput } from "./components/helpers/output"
@@ -11,15 +12,16 @@
 
     let chosenIndex = 0
     let search = ""
-    let tab: "slides" | "scenes" | "media" | "outputs" = "slides"
+    let tab: "slides" | "scenes" | "media" | "outputs" | "studio" = "slides"
     let notice = ""
 
     $: ref = $activeShow?.id ? getLayoutRef() : []
     $: enabledOutputs = Object.entries($outputs).filter(([, output]) => output.enabled)
     $: sceneItems = Object.entries($scenes)
-    $: mediaItems = Object.entries($media).filter(([id, asset]) => (asset?.name || asset?.path || id).toLowerCase().includes(search.toLowerCase()))
+    $: mediaItems = Object.entries($media).filter(([id, asset]) => (asset?.name || asset?.name || id).toLowerCase().includes(search.toLowerCase()))
     $: locked = $outLocked
 
+    function chooseTab(key: string) { tab = key as typeof tab }
     function guard(action: () => void) {
         if (get(outLocked)) { notice = "Outputs locked"; return }
         try { action(); notice = "" } catch (error) { notice = String(error) }
@@ -37,11 +39,13 @@
 <section class="fullstage" aria-label="FullStage operator workspace">
     <header><strong>Full<span>Stage</span></strong><small> OPEN PRESENTER SOFTWARE · NATIVE CONTROL ALPHA</small></header>
     <nav aria-label="Workspace sections">
-        {#each ["slides", "scenes", "media", "outputs"] as key}
-            <button class:active={tab === key} on:click={() => tab = key as typeof tab}>{key}</button>
+        {#each ["slides", "scenes", "media", "outputs", "studio"] as key}
+            <button class:active={tab === key} on:click={() => chooseTab(key)}>{key}</button>
         {/each}
     </nav>
-    {#if tab === "slides"}
+    {#if tab === "studio"}
+        <FullStageStudio />
+    {:else if tab === "slides"}
         <h2>Service cue selection</h2>
         {#if !$activeShow?.id}<p>Select a show using the existing FreeShow project browser.</p>{/if}
         <div class="cards">
@@ -61,7 +65,7 @@
         <input aria-label="Search media" placeholder="Search imported media" bind:value={search} />
         <div class="cards">
             {#each mediaItems as [id, asset]}
-                <button disabled={locked} title={asset?.path || ""} on:click={() => guard(() => setOutput("background", { id, path: asset.path, type: asset.type }))}>{asset?.name || asset?.path || id}</button>
+                <button disabled={locked} title={asset?.name || ""} on:click={() => guard(() => setOutput("background", { id, path: asset.path, type: "media" }))}>{asset?.name || asset?.name || id}</button>
             {/each}
         </div>
     {:else}
