@@ -22,9 +22,57 @@ jobs:
             echo 'ready=false' >> "$GITHUB_OUTPUT"
             echo 'Desktop source not yet imported; package builds intentionally gated.' >> "$GITHUB_STEP_SUMMARY"
           fi
-  desktop:
+  svelte-regression:
+    name: Compare with untouched FreeShow Svelte baseline
     needs: source-gate
     if: needs.source-gate.outputs.ready == 'true'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+      - uses: actions/checkout@v4
+        with:
+          ref: integration/freeshow-v1.6.6
+          path: upstream
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install prerequisites
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libudev-dev libx11-dev libxkbfile-dev libegl1 libgles2 libegl-dev
+      - name: Install and typecheck unchanged upstream
+        shell: bash
+        run: |
+          cd upstream
+          npm ci
+          npm run test:svelte > ../baseline.log 2>&1 || true
+          tail -n 2 ../baseline.log
+      - name: Install and typecheck candidate
+        shell: bash
+        run: |
+          cd candidate
+          npm ci
+          npm run test:svelte > ../candidate.log 2>&1 || true
+          tail -n 2 ../candidate.log
+      - name: Reject novel diagnostics
+        run: node candidate/scripts/ci/compare-svelte-baseline.mjs baseline.log candidate.log | tee svelte-diff.json
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fullstage-svelte-baseline-${{ github.run_number }}
+          path: |
+            baseline.log
+            candidate.log
+            svelte-diff.json
+          if-no-files-found: ignore
+          retention-days: 30
+  desktop:
+    needs: [source-gate, svelte-regression]
+    if: needs.source-gate.outputs.ready == 'true' && needs.svelte-regression.result == 'success'
     strategy:
       fail-fast: false
       matrix:
@@ -80,7 +128,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get install -y xvfb
-          VITE_FULLSTAGE_UI=true npm run build
+          VITE_FULLSTAGE_UI=true VITE_FULLSTAGE_TEST=true npm run build
           xvfb-run -a npx playwright test --config config/testing/playwright.config.ts config/testing/fullstage.smoke.test.ts
       - name: Upload operator smoke diagnostics
         if: runner.os == 'Linux' && always()
@@ -110,5 +158,6 @@ jobs:
           SMOKE: ${{ steps.smoke.outcome }}
         run: |
           echo "Typecheck=$SVELTE packaging=$PACKAGING" >> "$GITHUB_STEP_SUMMARY"
-          test "$SVELTE" = success && test "$PACKAGING" = success
+          echo "Svelte errors are checked against FreeShow by the mandatory svelte-regression job."
+          test "$PACKAGING" = success
           if [[ "$RUNNER_OS" == "Linux" ]]; then test "$SMOKE" = success; fi
