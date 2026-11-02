@@ -3,7 +3,7 @@
     // Integrate through MainLayout.svelte only after the upstream build baseline passes.
     import { get } from "svelte/store"
     import FullStageStudio from "./FullStageStudio.svelte"
-    import { activeShow, outLocked, outputs, scenes, media } from "./stores"
+    import { activeShow, outLocked, outputs, scenes, media, showsCache } from "./stores"
     import { getLayoutRef } from "./components/helpers/show"
     import { updateOut } from "./components/helpers/showActions"
     import { setOutput, startScene, toggleOutput } from "./components/helpers/output"
@@ -27,7 +27,44 @@
         ;(window as any).__fullstageSmoke = {
             snapshot: () => JSON.parse(JSON.stringify(get(outputs))),
             selectedIndex: () => chosenIndex,
-            activeShowId: () => get(activeShow)?.id || null
+            activeShowId: () => get(activeShow)?.id || null,
+            seedFixture: () => {
+                const now = Date.now()
+                const id = "fullstage_ci_show"
+                const layout = "ci_layout"
+                const slideIds = ["ci_slide_one", "ci_slide_two"]
+                const slides = Object.fromEntries(slideIds.map((sid) => [sid, {
+                    group: null, color: null, settings: {}, notes: "",
+                    items: [{ style: "", lines: [{ text: [{ value: sid }] }] }]
+                }]))
+                showsCache.update((all) => ({
+                    ...all,
+                    [id]: {
+                        name: "FullStage CI Sample", category: null,
+                        settings: { activeLayout: layout, template: null },
+                        timestamps: { created: now, modified: now, used: null },
+                        meta: {}, slides,
+                        layouts: { [layout]: {
+                            name: "CI layout", notes: "",
+                            slides: slideIds.map((sid) => ({ id: sid }))
+                        } },
+                        media: {}
+                    } as any
+                }))
+                outputs.update((all) => ({
+                    ...all,
+                    fullstage_ci_virtual: {
+                        name: "FullStage CI Virtual", color: "#438dff",
+                        enabled: true, active: true, screen: null,
+                        bounds: { x: 0, y: 0, width: 1280, height: 720 },
+                        out: { slide: null }
+                    } as any
+                }))
+                outLocked.set(false)
+                chosenIndex = 0
+                activeShow.set({ id, type: "show", index: 0 })
+                return { showId: id, outputId: "fullstage_ci_virtual" }
+            }
         }
     }
 
