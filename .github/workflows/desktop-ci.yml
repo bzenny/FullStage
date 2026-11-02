@@ -73,6 +73,25 @@ jobs:
         id: packaging
         continue-on-error: true
         run: npm run pack
+      - name: FullStage operator smoke test (Linux, opt-in build)
+        if: runner.os == 'Linux'
+        id: smoke
+        continue-on-error: true
+        shell: bash
+        run: |
+          sudo apt-get install -y xvfb
+          VITE_FULLSTAGE_UI=true npm run build
+          xvfb-run -a npx playwright test --config config/testing/playwright.config.ts config/testing/fullstage.smoke.test.ts
+      - name: Upload operator smoke diagnostics
+        if: runner.os == 'Linux' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fullstage-operator-smoke-${{ github.run_number }}
+          path: |
+            test-output/playwright-report/**
+            test-results/**
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Upload unpacked application
         uses: actions/upload-artifact@v4
         with:
@@ -88,6 +107,8 @@ jobs:
         env:
           SVELTE: ${{ steps.svelte.outcome }}
           PACKAGING: ${{ steps.packaging.outcome }}
+          SMOKE: ${{ steps.smoke.outcome }}
         run: |
           echo "Typecheck=$SVELTE packaging=$PACKAGING" >> "$GITHUB_STEP_SUMMARY"
           test "$SVELTE" = success && test "$PACKAGING" = success
+          if [[ "$RUNNER_OS" == "Linux" ]]; then test "$SMOKE" = success; fi
