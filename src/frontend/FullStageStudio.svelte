@@ -3,7 +3,7 @@
     import FullStageCanvas from "./FullStageCanvas.svelte"
     import FullStageMediaLibrary from "./FullStageMediaLibrary.svelte"
     import { activePage, media, outLocked, outputs, scenes, styles } from "./stores"
-    import { startScene, setOutput } from "./components/helpers/output"
+    import { startScene } from "./components/helpers/output"
 
     let tab: "scenes" | "media" = "scenes"
     let selectedSceneId = ""
@@ -55,10 +55,6 @@
     function playScene() {
         if ($outLocked || !selectedSceneId) return
         startScene(selectedSceneId)
-    }
-    function showMedia(id: string, asset: any) {
-        if ($outLocked || !asset?.name) return
-        setOutput("background", { id, path: asset.path, type: asset.type })
     }
 </script>
 
