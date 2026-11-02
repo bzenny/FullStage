@@ -1,7 +1,7 @@
 name: Desktop CI
 on:
   push:
-    branches: [main, 'feature/**', 'integration/**']
+    branches: [main, 'feature/**', 'integration/**', 'develop/**']
   workflow_dispatch:
 permissions:
   contents: read
