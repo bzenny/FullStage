@@ -65,7 +65,7 @@
         <input aria-label="Search media" placeholder="Search imported media" bind:value={search} />
         <div class="cards">
             {#each mediaItems as [id, asset]}
-                <button disabled={locked} title={asset?.name || ""} on:click={() => guard(() => setOutput("background", { id, path: asset.path, type: "media" }))}>{asset?.name || asset?.name || id}</button>
+                <button disabled={locked} title={asset?.name || ""} on:click={() => guard(() => setOutput("background", { id, type: "media" }))}>{asset?.name || asset?.name || id}</button>
             {/each}
         </div>
     {:else}
