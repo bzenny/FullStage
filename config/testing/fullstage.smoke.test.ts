@@ -43,6 +43,22 @@ test("FullStage native operator: preview, guard, clear/restore and metadata relo
         await expect(workspace.getByRole("button", { name: "CLEAR ALL" })).toBeVisible()
         await expect(workspace.getByRole("button", { name: "RESTORE" })).toBeVisible()
 
+        // Exercise a real cue rather than asserting button labels alone.
+        await window.getByText("New project").first().click({ timeout: 15_000 })
+        await window.getByText("New show").first().click({ timeout: 15_000 })
+        await window.locator("#name").fill("FullStage Smoke Show")
+        await window.getByText("Quick Lyrics").click()
+        await window.getByPlaceholder("[Verse]").fill("[Verse]\\nFullStage smoke cue")
+        await window.getByTestId("create.show.popup.new.show").click()
+        await expect(take).toBeEnabled({ timeout: 15_000 })
+        // Selecting a cue should only update preview selection until TAKE is clicked.
+        await workspace.getByRole("button", { name: /Cue 1/ }).first().click()
+        await take.click()
+        await workspace.getByRole("button", { name: "CLEAR SLIDE" }).click()
+        await workspace.getByRole("button", { name: "RESTORE" }).click()
+        // CLEAR ALL uses FreeShow's clear action; this is not physical blackout.
+        await workspace.getByRole("button", { name: "CLEAR ALL" }).click()
+        await expect(workspace).toBeVisible()
         // The media playlist is explicitly metadata-only localStorage today.
         await workspace.getByRole("button", { name: "studio", exact: true }).click()
         await workspace.getByRole("button", { name: "Media Studio", exact: true }).click()
