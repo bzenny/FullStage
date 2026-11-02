@@ -51,11 +51,41 @@ test("FullStage native operator: preview, guard, clear/restore and metadata relo
         await window.getByPlaceholder("[Verse]").fill("[Verse]\\nFullStage smoke cue")
         await window.getByTestId("create.show.popup.new.show").click()
         await expect(take).toBeEnabled({ timeout: 15_000 })
-        // Selecting a cue should only update preview selection until TAKE is clicked.
+        // Inspect real FreeShow outputs, not merely displayed button labels.
+        // The read-only bridge is compiled exclusively into VITE_FULLSTAGE_TEST builds.
+        const snapshot = () => window.evaluate(() => {
+            const probe = (window as any).__fullstageSmoke
+            if (!probe) throw new Error("Missing test-only FullStage output probe")
+            return probe.snapshot() as Record<string, { enabled?: boolean; out?: { slide?: { id?: string; index?: number } | null } }>
+        })
+        const outputsBefore = await snapshot()
+        const liveIds = Object.keys(outputsBefore).filter(id => outputsBefore[id]?.enabled)
+        if (!liveIds.length) throw new Error("Cannot prove preview/live isolation: no enabled outputs configured")
+        const unchanged = (a: typeof outputsBefore, b: typeof outputsBefore) =>
+            liveIds.every(id => JSON.stringify(a[id]?.out ?? null) === JSON.stringify(b[id]?.out ?? null))
+
+        // Cue selection alone is forbidden to mutate the actual output stores.
         await workspace.getByRole("button", { name: /Cue 1/ }).first().click()
+        await expect.poll(async () => window.evaluate(() => (window as any).__fullstageSmoke.selectedIndex())).toBe(0)
+        const outputsAfterPreview = await snapshot()
+        expect(unchanged(outputsBefore, outputsAfterPreview), "preview selection must not alter live outputs").toBe(true)
         await take.click()
+        await expect.poll(async () => {
+            const current = await snapshot()
+            return liveIds.some(id => current[id]?.out?.slide?.id && current[id]?.out?.slide?.id !== outputsBefore[id]?.out?.slide?.id)
+        }, { timeout: 10_000 }).toBe(true)
+        const liveAfterTake = await snapshot()
         await workspace.getByRole("button", { name: "CLEAR SLIDE" }).click()
+        await expect.poll(async () => {
+            const current = await snapshot()
+            return liveIds.every(id => current[id]?.out?.slide == null)
+        }).toBe(true)
         await workspace.getByRole("button", { name: "RESTORE" }).click()
+        await expect.poll(async () => {
+            const current = await snapshot()
+            return liveIds.some(id => current[id]?.out?.slide != null)
+        }).toBe(true)
+        expect(liveAfterTake).not.toEqual(outputsBefore)
         // CLEAR ALL uses FreeShow's clear action; this is not physical blackout.
         await workspace.getByRole("button", { name: "CLEAR ALL" }).click()
         await expect(workspace).toBeVisible()
@@ -79,7 +109,7 @@ test("FullStage native operator: preview, guard, clear/restore and metadata relo
         await expect(workspace.getByText("CI Smoke Asset")).toBeVisible()
         await workspace.getByText("Playlist").locator("..").locator("input").fill("CI Smoke Playlist")
         await expect(workspace.getByText("1 items")).toBeVisible()
-        // Preview/live and actual file durability still require separate tests.
+        // Physical output and actual file durability still require separate tests.
     } finally {
         await Promise.race([app.close(), new Promise(resolve => setTimeout(resolve, 5000))]).catch(() => {})
         const p = app.process()
