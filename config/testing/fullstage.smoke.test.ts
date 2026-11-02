@@ -61,6 +61,7 @@ test("FullStage native operator: preview, guard, clear/restore and metadata relo
         await workspace.getByRole("button", { name: "studio", exact: true }).click()
         await workspace.getByRole("button", { name: "Media Studio", exact: true }).click()
         await expect(workspace.getByText("CI Smoke Asset")).toBeVisible()
+        await workspace.getByText("Playlist").locator("..").locator("input").fill("CI Smoke Playlist")
         await expect(workspace.getByText("1 items")).toBeVisible()
         // Preview/live and actual file durability still require separate tests.
     } finally {
