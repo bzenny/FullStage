@@ -21,6 +21,16 @@
     $: mediaItems = Object.entries($media).filter(([id, asset]) => (asset?.name || asset?.name || id).toLowerCase().includes(search.toLowerCase()))
     $: locked = $outLocked
 
+    // Compiled out unless VITE_FULLSTAGE_TEST=true is explicitly set for CI.
+    // Never expose output state to production renderer globals.
+    if (import.meta.env.VITE_FULLSTAGE_TEST === "true") {
+        ;(window as any).__fullstageSmoke = {
+            snapshot: () => JSON.parse(JSON.stringify(get(outputs))),
+            selectedIndex: () => chosenIndex,
+            activeShowId: () => get(activeShow)?.id || null
+        }
+    }
+
     function chooseTab(key: string) { tab = key as typeof tab }
     function guard(action: () => void) {
         if (get(outLocked)) { notice = "Outputs locked"; return }
