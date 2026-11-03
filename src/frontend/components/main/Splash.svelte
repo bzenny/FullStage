@@ -9,6 +9,12 @@
     import Center from "../system/Center.svelte"
     import { getVOTD } from "./votd"
 
+    let fullstageLogoAvailable = true
+    function onFullStageLogoError() {
+        fullstageLogoAvailable = false
+        console.warn("[FullStage branding] Splash image missing; using text fallback")
+    }
+
     function createProject() {
         // if opened project is empty go to project list (to reduce confusion)
         if ($projects[$activeProject || ""]?.shows?.length === 0) {
@@ -48,7 +54,12 @@
 
 <Center class="context #splash">
     {#if import.meta.env.VITE_FULLSTAGE_UI === "true"}
-        <img class="fullstage-logo" src="./fullstage-lockup-white.png" alt="FullStage — Open Presenter Software" draggable={false} />
+        {#if fullstageLogoAvailable}
+            <img class="fullstage-logo" src="./fullstage-lockup-white.png" alt="FullStage — Open Presenter Software" draggable={false} on:error={onFullStageLogoError} />
+        {:else}
+            <h1>FullStage</h1>
+            <p>Open Presenter Software</p>
+        {/if}
     {:else}
         <h1>FreeShow</h1>
     {/if}
