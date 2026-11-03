@@ -4,6 +4,12 @@
     import Link from "../../inputs/Link.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
 
+    let fullstageLogoAvailable = true
+    function onFullStageLogoError() {
+        fullstageLogoAvailable = false
+        console.warn("[FullStage branding] About image missing; using text fallback")
+    }
+
     const assets: { name: string; url: string; title?: string }[] = [
         { name: "CMG Sans (Custom font)", url: "https://www.churchmotiongraphics.com/cmg-sans/" },
         { name: "Google Fonts (Icons)", url: "https://fonts.google.com/icons/" },
@@ -25,7 +31,11 @@
 <div style="text-align: center;">
     <div class="logo">
         {#if import.meta.env.VITE_FULLSTAGE_UI === "true"}
-            <img style="height: 65px;max-width: 100%;" src="./fullstage-lockup-white.png" alt="FullStage" draggable={false} />
+            {#if fullstageLogoAvailable}
+                <img style="height: 65px;max-width: 100%;" src="./fullstage-lockup-white.png" alt="FullStage" draggable={false} on:error={onFullStageLogoError} />
+            {:else}
+                <h1 style="color: var(--text);">FullStage</h1>
+            {/if}
         {:else}
             <img style="height: 35px;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" draggable={false} />
             <h1 style="color: var(--text);font-size: 1.7em;">FreeShow</h1>
