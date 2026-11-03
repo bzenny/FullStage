@@ -51,6 +51,15 @@ test("FullStage native operator: preview, guard, clear/restore and metadata relo
         })
         await expect(take).toBeEnabled({ timeout: 15_000 })
         await expect(workspace.getByRole("button", { name: /Cue 2/ })).toBeVisible()
+        // FreeShow's onboarding guide may appear even when initial setup was skipped.
+        // Dismiss it before clicking cues: the overlay otherwise intercepts input.
+        const guide = window.locator(".guide")
+        if (await guide.isVisible().catch(() => false)) {
+            const skip = window.locator("#guideButtons").getByText("Skip")
+            await skip.waitFor({ state: "visible", timeout: 10_000 })
+            await skip.click()
+            await expect(guide).toBeHidden({ timeout: 10_000 })
+        }
         // Inspect real FreeShow outputs, not merely displayed button labels.
         // The read-only bridge is compiled exclusively into VITE_FULLSTAGE_TEST builds.
         const snapshot = () => window.evaluate(() => {
