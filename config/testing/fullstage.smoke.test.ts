@@ -51,15 +51,9 @@ test("FullStage native operator: preview, guard, clear/restore and metadata relo
         })
         await expect(take).toBeEnabled({ timeout: 15_000 })
         await expect(workspace.getByRole("button", { name: /Cue 2/ })).toBeVisible()
-        // FreeShow's onboarding guide may appear even when initial setup was skipped.
-        // Dismiss it before clicking cues: the overlay otherwise intercepts input.
-        const guide = window.locator(".guide")
-        if (await guide.isVisible().catch(() => false)) {
-            const skip = window.locator("#guideButtons").getByText("Skip")
-            await skip.waitFor({ state: "visible", timeout: 10_000 })
-            await skip.click()
-            await expect(guide).toBeHidden({ timeout: 10_000 })
-        }
+        // The test-instrumented build must never render onboarding overlays.
+        // Do not hide operator UI or bypass actual pointer interaction.
+        await expect(window.locator(".guide")).toHaveCount(0)
         // Inspect real FreeShow outputs, not merely displayed button labels.
         // The read-only bridge is compiled exclusively into VITE_FULLSTAGE_TEST builds.
         const snapshot = () => window.evaluate(() => {
@@ -67,16 +61,6 @@ test("FullStage native operator: preview, guard, clear/restore and metadata relo
             if (!probe) throw new Error("Missing test-only FullStage output probe")
             return probe.snapshot() as Record<string, { enabled?: boolean; out?: { slide?: { id?: string; index?: number } | null } }>
         })
-        // FreeShow's onboarding guide can reactivate after its initial skip, and its
-        // full-screen overlay intercepts TAKE/CLEAR click targets. Escape closes the
-        // guide through its native handler without bypassing the operator controls.
-        async function dismissGuide() {
-            const overlay = window.locator(".guide")
-            if (await overlay.count()) {
-                await window.keyboard.press("Escape")
-                await expect(overlay).toBeHidden({ timeout: 10_000 })
-            }
-        }
         const outputsBefore = await snapshot()
         const liveIds = [fixture.outputId]
         expect(outputsBefore[fixture.outputId]?.enabled).toBe(true)
@@ -89,7 +73,6 @@ test("FullStage native operator: preview, guard, clear/restore and metadata relo
         await expect.poll(async () => window.evaluate(() => (window as any).__fullstageSmoke.selectedIndex())).toBe(1)
         const outputsAfterPreview = await snapshot()
         expect(unchanged(outputsBefore, outputsAfterPreview), "preview selection must not alter live outputs").toBe(true)
-        await dismissGuide()
         await take.click()
         await expect.poll(async () => {
             const current = await snapshot()
@@ -97,21 +80,16 @@ test("FullStage native operator: preview, guard, clear/restore and metadata relo
         }, { timeout: 10_000 }).toBe(true)
         const liveAfterTake = await snapshot()
         // CLEAR SLIDE only clears slide data; RESTORE recovers the CLEAR ALL cache.
-        await dismissGuide()
         await workspace.getByRole("button", { name: "CLEAR SLIDE" }).click()
         await expect.poll(async () => (await snapshot())[fixture.outputId]?.out?.slide ?? null).toBeNull()
-        await dismissGuide()
         await take.click()
         await expect.poll(async () => (await snapshot())[fixture.outputId]?.out?.slide?.index).toBe(1)
-        await dismissGuide()
         await workspace.getByRole("button", { name: "CLEAR ALL" }).click()
         await expect.poll(async () => (await snapshot())[fixture.outputId]?.out?.slide ?? null).toBeNull()
-        await dismissGuide()
         await workspace.getByRole("button", { name: "RESTORE" }).click()
         await expect.poll(async () => (await snapshot())[fixture.outputId]?.out?.slide?.index).toBe(1)
         expect(liveAfterTake).not.toEqual(outputsBefore)
         // The media playlist is explicitly metadata-only localStorage today.
-        await dismissGuide()
         await workspace.getByRole("button", { name: "studio", exact: true }).click()
         await workspace.getByRole("button", { name: "Media Studio", exact: true }).click()
         const playlist = workspace.getByText("Playlist").locator("..").locator("input")
@@ -126,7 +104,6 @@ test("FullStage native operator: preview, guard, clear/restore and metadata relo
         })
         await window.reload()
         await expect(workspace).toBeVisible({ timeout: 30_000 })
-        await dismissGuide()
         await workspace.getByRole("button", { name: "studio", exact: true }).click()
         await workspace.getByRole("button", { name: "Media Studio", exact: true }).click()
         await expect(workspace.getByText("CI Smoke Asset")).toBeVisible()
