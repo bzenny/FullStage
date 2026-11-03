@@ -98,6 +98,9 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev libudev-dev libx11-dev libxkbfile-dev libegl1 libgles2 libegl-dev libgles-dev
       - name: Install
         run: npm ci
+      - name: Stage approved FullStage branding for packaged builds
+        if: matrix.label != ''
+        run: node scripts/branding/apply-fullstage.cjs
       - name: Unit tests
         run: npm run test:unit --if-present
       - name: Svelte check (diagnostic; does not block independent build)
