@@ -104,9 +104,11 @@ jobs:
         id: svelte
         continue-on-error: true
         run: npm run test:svelte --if-present
-      - name: Compile application (independent diagnostics)
+      - name: Compile FullStage-enabled desktop application
         id: compile
         continue-on-error: true
+        env:
+          VITE_FULLSTAGE_UI: "true"
         run: npm run build
       - name: Verify compilation and Svelte validation
         shell: bash
@@ -117,11 +119,11 @@ jobs:
           echo "Svelte: $SVELTE; Build: $COMPILE"
           echo "Typechecking remains a release-blocking gate; packaging is diagnostic only."
           test "$COMPILE" = success
-      - name: Package unpacked application (diagnostic)
+      - name: Package FullStage-enabled unpacked application (diagnostic)
         id: packaging
         continue-on-error: true
         run: npm run pack
-      - name: FullStage operator smoke test (Linux, opt-in build)
+      - name: FullStage operator smoke test (Linux, test-instrumented build)
         if: runner.os == 'Linux'
         id: smoke
         continue-on-error: true
@@ -143,7 +145,7 @@ jobs:
       - name: Upload unpacked application
         uses: actions/upload-artifact@v4
         with:
-          name: fullstage-${{ matrix.label }}-unpacked-${{ github.run_number }}
+          name: fullstage-ui-enabled-${{ matrix.label }}-unpacked-${{ github.run_number }}
           path: |
             dist/**
             release/**
