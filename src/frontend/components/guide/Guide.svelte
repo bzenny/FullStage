@@ -8,6 +8,10 @@
     import Button from "../inputs/Button.svelte"
     import { guideSteps } from "./guideSteps"
 
+    // Only suppress onboarding in a specifically instrumented FullStage smoke build.
+    // Normal FullStage and upstream FreeShow builds retain the onboarding guide.
+    const suppressGuideForSmoke = import.meta.env.VITE_FULLSTAGE_UI === "true" && import.meta.env.VITE_FULLSTAGE_TEST === "true"
+
     let steps = guideSteps
     $: active = $guideActive
 
@@ -75,7 +79,7 @@
 
 <svelte:window on:mousedown={mousedown} on:keydown={keydown} />
 
-{#if active}
+{#if active && !suppressGuideForSmoke}
     {#if currentStep && currentStyle}
         <div class="guide" transition:fade>
             <div class="focus" style={currentStyle}>
