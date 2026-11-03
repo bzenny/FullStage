@@ -4,6 +4,12 @@
     import Link from "../../inputs/Link.svelte"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
 
+    let fullstageLogoAvailable = true
+    function onFullStageLogoError() {
+        fullstageLogoAvailable = false
+        console.warn("[FullStage branding] About image missing; using text fallback")
+    }
+
     const assets: { name: string; url: string; title?: string }[] = [
         { name: "CMG Sans (Custom font)", url: "https://www.churchmotiongraphics.com/cmg-sans/" },
         { name: "Google Fonts (Icons)", url: "https://fonts.google.com/icons/" },
@@ -24,15 +30,25 @@
 
 <div style="text-align: center;">
     <div class="logo">
-        <img style="height: 35px;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" draggable={false} />
-        <h1 style="color: var(--text);font-size: 1.7em;">FreeShow</h1>
+        {#if import.meta.env.VITE_FULLSTAGE_UI === "true"}
+            {#if fullstageLogoAvailable}
+                <img style="height: 65px;max-width: 100%;" src="./fullstage-lockup-white.png" alt="FullStage" draggable={false} on:error={onFullStageLogoError} />
+            {:else}
+                <h1 style="color: var(--text);">FullStage</h1>
+            {/if}
+        {:else}
+            <img style="height: 35px;" src="./import-logos/freeshow.webp" alt="FreeShow-logo" draggable={false} />
+            <h1 style="color: var(--text);font-size: 1.7em;">FreeShow</h1>
+        {/if}
     </div>
 
     <p style="font-size: 0.8em;margin-top: 2px;">
         <span style="opacity: 0.8;">v{$version}</span>
-        <MaterialButton variant="outlined" style="margin-left: 5px;display: inline-flex;min-height: 0;padding: 0 5px;vertical-align: baseline;" on:click={() => activePopup.set("update_manager")} white>
-            <T id="about.check_updates" />
-        </MaterialButton>
+        {#if import.meta.env.VITE_FULLSTAGE_UI !== "true"}
+            <MaterialButton variant="outlined" style="margin-left: 5px;display: inline-flex;min-height: 0;padding: 0 5px;vertical-align: baseline;" on:click={() => activePopup.set("update_manager")} white>
+                <T id="about.check_updates" />
+            </MaterialButton>
+        {/if}
     </p>
 
     <!-- <p>
@@ -44,6 +60,10 @@
 
 <div class="main">
     <div class="text">
+        {#if import.meta.env.VITE_FULLSTAGE_UI === "true"}
+            <div>• FullStage is based on FreeShow (GPL-3.0); original upstream: <Link url="https://github.com/ChurchApps/FreeShow">ChurchApps/FreeShow</Link></div>
+            <div>• FullStage development and issues: <Link url="https://github.com/bzenny/FullStage">bzenny/FullStage</Link></div>
+        {/if}
         <div>
             • <T id="about.more" />
             <Link url="https://churchapps.org/">ChurchApps</Link>

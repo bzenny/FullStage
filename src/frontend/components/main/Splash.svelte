@@ -9,6 +9,12 @@
     import Center from "../system/Center.svelte"
     import { getVOTD } from "./votd"
 
+    let fullstageLogoAvailable = true
+    function onFullStageLogoError() {
+        fullstageLogoAvailable = false
+        console.warn("[FullStage branding] Splash image missing; using text fallback")
+    }
+
     function createProject() {
         // if opened project is empty go to project list (to reduce confusion)
         if ($projects[$activeProject || ""]?.shows?.length === 0) {
@@ -47,7 +53,16 @@
 </script>
 
 <Center class="context #splash">
-    <h1>FreeShow</h1>
+    {#if import.meta.env.VITE_FULLSTAGE_UI === "true"}
+        {#if fullstageLogoAvailable}
+            <img class="fullstage-logo" src="./fullstage-lockup-white.png" alt="FullStage — Open Presenter Software" draggable={false} on:error={onFullStageLogoError} />
+        {:else}
+            <h1>FullStage</h1>
+            <p>Open Presenter Software</p>
+        {/if}
+    {:else}
+        <h1>FreeShow</h1>
+    {/if}
     <p style="opacity: 0.7;">v{$version}</p>
     {#if $special.splashText}
         <p style="padding-top: 30px">
@@ -64,7 +79,7 @@
     {:else if Object.keys($shows).length < 20}
         <!-- shows up for new users (can be found in "About" menu) -->
         <p style="padding-top: 30px">
-            <Link url="https://freeshow.app/docs">
+            <Link url={import.meta.env.VITE_FULLSTAGE_UI === "true" ? "https://github.com/bzenny/FullStage" : "https://freeshow.app/docs"}>
                 <T id="main.docs" />
                 <Icon id="launch" white />
             </Link>
@@ -99,6 +114,7 @@
 </Center>
 
 <style>
+    .fullstage-logo { display: block; width: min(440px, 82%); max-height: 210px; object-fit: contain; margin: 0 auto; }
     h1 {
         font-size: 4em;
         overflow: initial;

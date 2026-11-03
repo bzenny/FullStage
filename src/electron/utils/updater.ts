@@ -1,11 +1,11 @@
-// import { Notification, app } from "electron"
+import { app } from "electron"
 import { autoUpdater } from "electron-updater"
 import { isProd } from ".."
 
 // let notification: Notification | null
 
 export default async function checkForUpdates() {
-    if (!isProd) return
+    if (!isProd || app.getName().toLowerCase() === "fullstage") return
 
     try {
         await autoUpdater.checkForUpdatesAndNotify()

@@ -55,3 +55,33 @@ Updated 2026-10-20. **STATUS: BLOCKED — pre-alpha.** Do not publish production
 - **Beta:** sections 0–5 green, key OBS and target hardware tests green.
 - **Stable:** all advertised features qualified, regression, backups, recovery and user manuals complete.
 - No release may pass a check because CI was skipped; link actual passing job and asset hash.
+
+## FullStage v0.6.0-alpha.1 qualification snapshot (2026-11-03)
+
+**Current verdict: NOT RELEASE-READY.** This snapshot does not override the gates above.
+
+### Desktop validation
+- Windows/macOS packaging previously passed on branding branch `9ccfaa680`, but new commit `b75237d71` must be retested.
+- Linux packaging completed, but the operator smoke test failed because upstream onboarding intercepted real pointer clicks.
+- `613ad494` suppresses only the onboarding rendering when **both** `VITE_FULLSTAGE_UI=true` and `VITE_FULLSTAGE_TEST=true` are compiled in; production onboarding stays intact.
+- `b75237d71` asserts no onboarding overlay in smoke builds, and keeps actual Preview → TAKE LIVE → CLEAR SLIDE → CLEAR ALL → RESTORE clicks and output-store assertions.
+- Any failure of Preview-before-TAKE isolation or restore behavior remains release-blocking; do **not** mark a pass by disabling assertions or forcing clicks.
+
+### Branding and packaging
+- Official Ribbon Spotlight F assets belong under `branding/fullstage/` on `feature/fullstage-branding-v1`.
+- In a branded build, `scripts/branding/apply-fullstage.cjs` stages approved icons and wordmarks when present, and writes `public/fullstage-branding-status.json` warnings if absent; missing art must never crash startup.
+- **Asset existence must still be verified from GitHub's branch tree**. Branding warnings permit engineering builds, but release qualification must record whether artwork actually shipped.
+- Inspect installer identity, icon, splash, About attribution, and absence of upstream FreeShow update prompts on all three platforms. GitHub green checks alone are insufficient to prove visual appearance.
+
+### Media persistence scope
+- `src/frontend/FullStageMediaLibrary.svelte` persists entries and playlist metadata in `localStorage["fullstage-media-v1"]`; this is a limited alpha capability.
+- The current smoke test checks a synthetic metadata entry surviving reload. It does **not** prove that native files are copied, indexed, seekable, playable, or survive restart.
+- Do not label this as durable native media persistence. Before making that claim, test real file import via FreeShow's native import layer, process restart, missing-file recovery, thumbnail generation, and playlist playback. Publish the limitation in alpha notes.
+
+### Required sign-off evidence
+- [ ] CI for the exact candidate commit: Windows, macOS, Linux jobs all successful
+- [ ] Smoke test: Preview untouched before TAKE, LIVE after TAKE, CLEAR/RESTORE transitions proven from real output stores
+- [ ] Branding manifests and binaries present in GitHub branch, plus verified package icons and no upstream updater
+- [ ] Media metadata survives renderer reload; native-media limitations explicitly disclosed
+- [ ] Linux AppImage/deb and Windows/macOS artifacts launched on target systems
+- [ ] Release artifacts, hashes, and provenance listed alongside `v0.6.0-alpha.1`

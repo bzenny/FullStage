@@ -8,6 +8,8 @@ interface UpdateData {
 }
 
 export async function getUpdateData(currentVersion: string, includeBeta: boolean): Promise<UpdateData> {
+    // FullStage alpha has no dedicated update feed yet; never offer upstream FreeShow as an upgrade.
+    if (import.meta.env.VITE_FULLSTAGE_UI === "true") return { latestVersion: "", changelog: "", hasUpdate: false }
     const response = await fetch("https://api.github.com/repos/ChurchApps/freeshow/releases")
     const data = await response.json()
 
